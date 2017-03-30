@@ -1,0 +1,59 @@
+#coding:utf-8
+import db
+import UrlDownload
+import basefunc
+import threading
+import itertools
+import time
+import json
+
+
+def pyphantomjs(a):
+    for i in itertools.count(1):
+	time.sleep(1)
+	if i >=5:
+		break
+        try:
+            baseUrl = 'http://weixin.sogou.com/weixin?type=1&ie=utf8&_sug_=n&_sug_type_='
+            codes = db.getAllCode();
+            if len(codes[0]) < 1:
+		#print(1)
+                continue
+            baseUrl += '&query=' + codes[0]
+            #返回资源
+            driver = UrlDownload.download(baseUrl)
+            nextUrl = ''
+
+            #判断是否为None
+            if driver != None:
+                a = basefunc.resultfind(driver)
+                if a != '':
+                    nextUrl = a
+		
+	    #print(nextUrl)
+	    #exit()
+            UrlDownload.getArticleList(nextUrl, codes[0])
+
+            #print(u'完成公众号文章列表采集')
+	    print(u"Complete the article List color set")
+        except Exception as e:
+            print(e)
+#pyphantomjs(1)
+
+def main(thread_num):
+    thread_list = []  # 定义一个线程列表
+    for i in range(thread_num):
+        thread_list.append(threading.Thread(target=pyphantomjs, args=(3,)))
+
+    for a in thread_list:
+        # a.setDaemon(True)这个setDaemon默认为False 非守护线程
+        # 表示主线程等所有子线程结束后，在结束
+        # 设置为True的话 表示是个守护线程 子线程就会随着主线程的结束而结束
+        # 听说服务监控工具生成的心跳线程 就是用的守护线程
+	a.setDaemon(True)
+        a.start()
+
+    for a in thread_list:
+        a.join()  # 表示等待直到线程运行完毕
+
+main(5)
